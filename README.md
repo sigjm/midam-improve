@@ -3,7 +3,7 @@
 [jangingmall](https://github.com/jangingmall) 조직 레포의 **AWS 접점(CI/CD, Terraform, 런타임 S3)** 을
 [MiniStack](https://github.com/ministackorg/ministack)(로컬 AWS 에뮬레이터) 위에서 실제로 돌려 본 기록과, 그 과정에서 찾은 개선점입니다.
 
-- 실제 AWS 계정·state 버킷에는 한 번도 접속하지 않았습니다 ([안전장치](#안전장치)).
+- 실제 AWS 계정·state 버킷에는 한 번도 접속하지 않았습니다 ([안전장치](#안전장치)). 무엇으로 테스트했는지는 [TESTING.md](TESTING.md).
 - 조직 레포 4개는 수정하지 않았습니다. 이 레포는 하네스와 기록만 담습니다.
 - 마지막 전체 실행: **52 passed / 0 failed** (2026-10-10)
 

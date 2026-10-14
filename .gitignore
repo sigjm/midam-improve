@@ -1,0 +1,9 @@
+# 조직 레포 클론 (README 의 "실행" 참고). 이 레포에는 올리지 않는다.
+/backend/
+/GenAI/
+/infra/
+/frontend/
+
+# 실행 산출물. 로그·state 에 계정 ID 가 찍히므로 커밋 금지.
+/emulator/.work/
+/emulator/out/

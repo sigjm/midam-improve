@@ -18,17 +18,18 @@
 1. [한눈에 보기](#overview)
 2. [검증 아키텍처](#architecture)
 3. [검증 흐름](#flow)
-4. [검증 대상](#targets)
-5. [결과](#results)
-6. [발견한 문제와 개선 제안](#findings)
-7. [테스트 도구와 환경](#tooling)
-8. [GitHub Actions 실행 방식](#actions)
-9. [에뮬레이터의 한계](#emulator-limits)
-10. [안전장치](#safety)
-11. [실행 방법](#getting-started)
-12. [하네스를 만들며 겪은 문제와 대응](#troubleshooting)
-13. [프로젝트 구조](#structure)
-14. [알려진 제한](#limits)
+4. [CI/CD 파이프라인 그래프](#pipeline-graph)
+5. [검증 대상](#targets)
+6. [결과](#results)
+7. [발견한 문제와 개선 제안](#findings)
+8. [테스트 도구와 환경](#tooling)
+9. [GitHub Actions 실행 방식](#actions)
+10. [에뮬레이터의 한계](#emulator-limits)
+11. [안전장치](#safety)
+12. [실행 방법](#getting-started)
+13. [하네스를 만들며 겪은 문제와 대응](#troubleshooting)
+14. [프로젝트 구조](#structure)
+15. [알려진 제한](#limits)
 
 <br>
 
@@ -87,6 +88,48 @@
 - 다이어그램 원본은 [`docs/images/pipeline.html`](docs/images/pipeline.html) 입니다.
 - 매 실행마다 에뮬레이터와 Terraform state 를 새로 만듭니다. 이전 실행의 상태에 기대지 않습니다.
 - 시나리오별 스텝 로그와 결과 JSON 은 `emulator/out/<ID>.log` · `<ID>.json` 에 남습니다.
+
+<br>
+
+<a id="pipeline-graph"></a>
+
+## 🕸️ CI/CD 파이프라인 그래프
+
+<p align="center">
+  <img src="docs/images/pipeline-graph.png" width="100%" alt="CI/CD 파이프라인 그래프" />
+</p>
+
+세 레포의 파이프라인 코드를 [graphify](https://github.com/Graphify-Labs/graphify) 로 지식 그래프로 만든 뒤, 그 구조를 diagram-design 으로 다시 그렸습니다.
+
+| 단계 | 내용 |
+|---|---|
+| 입력 | 워크플로 6개, infra 스크립트 2개, Terraform 15개(`ecr` · `github_oidc` · `codebuild` 모듈과 prod 호출부), 하네스 2개. 계정 ID 는 `<acct>` 로 가린 사본 |
+| 구조 추출 (AST) | 코드 19개 → 노드 127 · 엣지 235 |
+| 의미 추출 | 워크플로 YAML 6개 → 노드 27 · 엣지 65 (job, 액션, 태그 규칙, 레포 간 참조) |
+| 그래프 | 노드 163 · 엣지 280 · 커뮤니티 10. EXTRACTED 91% · INFERRED 9% (25개, 평균 confidence 0.87) |
+| 다시 그리기 | 노드 163개를 상자 11개로 합침 (아래 표) |
+
+graphify 가 짚은 것은 다음과 같습니다.
+
+- **중심 노드(연결 수):** `test.sh`(16), CodeBuild 프로젝트(13), OIDC 역할(11), GenAI publish(11), backend CD(10), build-deploy 초안(10), ECR 레포(9).
+- **레포를 가로지르는 연결:** backend CD → `module.github_oidc_backend`, GenAI publish → `module.github_oidc_genai` · CodeBuild 러너, 하네스의 shim → 실제 AWS 액션.
+- **묶음(hyperedge):** OIDC → ECR 로그인 → build-push 흐름, 태그 규칙 세 가지(`sha-<40>` · `<40>` · `<7>`).
+- **이번 검증 밖의 경로:** GenAI 의 page-generation · chatbot-llm 은 CodeBuild 러너(`runs-on: codebuild-jangin-genai-runner`)에서 빌드됩니다. 에뮬레이터 검증은 GitHub 호스티드 러너를 쓰는 chatbot-api leg 만 돌렸습니다.
+
+그림으로 옮기며 합치거나 뺀 것은 다음과 같습니다.
+
+| 그림의 상자 | 합친 graphify 노드 |
+|---|---|
+| AWS 액션 체인 | `configure-aws-credentials`, `amazon-ecr-login`, `build-push-action` |
+| GitHub OIDC 역할 3개 | `module.github_oidc` · `_backend` · `_genai`, IAM 정책 3개, github_oidc 모듈 커뮤니티(13), `bootstrap-github-oidc.sh` |
+| ECR 레포 5개 | `module.ecr`, ecr 모듈 커뮤니티(14), 태그 규칙 노드 3개 |
+| CodeBuild GenAI 러너 | `module.codebuild_genai_runner`, codebuild 모듈 커뮤니티(21) |
+| `test.sh` · `run_workflow.py` | 각 파일의 함수 · 환경변수 노드 |
+| 뺌 | backend CI(AWS 접점 없음), 표준 라이브러리 import, corpus 밖 변수 참조 |
+
+- graphify 결과: [`graph.html`](docs/graphify/graph.html)(인터랙티브, 내려받아 브라우저로 열기) · [`GRAPH_REPORT.md`](docs/graphify/GRAPH_REPORT.md) · [`graph.json`](docs/graphify/graph.json)
+- 의미 추출은 graphify 스킬의 subagent 대신 직접 했습니다. 추론한 엣지는 `graph.json` 에 `INFERRED` 와 confidence 로 남아 있습니다.
+- 다이어그램 원본은 [`docs/images/pipeline-graph.html`](docs/images/pipeline-graph.html) 입니다.
 
 <br>
 
@@ -354,6 +397,7 @@ midam-improve/
 │   ├── out/                  # 시나리오별 스텝 로그 · 결과 JSON
 │   └── .work/                # Terraform 작업 복사본 · 프로바이더 캐시 · local state (약 670MB)
 ├── docs/images/             # README 다이어그램 (HTML 원본 + PNG)
+├── docs/graphify/           # 파이프라인 지식 그래프 (graph.html · graph.json · GRAPH_REPORT.md)
 ├── backend/ · GenAI/ · infra/ · frontend/   # 조직 레포 클론
 ├── .gitignore
 └── README.md

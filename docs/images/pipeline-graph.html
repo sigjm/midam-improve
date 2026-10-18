@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CI/CD 파이프라인 그래프</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&family=Noto+Sans+KR:wght@400;500;600&family=Noto+Serif+KR:wght@400&family=Noto+Sans+TC:wght@400;500;600&family=Noto+Serif+TC:wght@400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper:   #f5f5f5;
+      --color-ink:     #2d3142;
+      --color-muted:   #4f5d75;
+      --color-accent:  #eb6c36;
+      --font-sans:     'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', system-ui, sans-serif;
+      --font-serif:    'Instrument Serif', 'Noto Serif KR', serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace;
+    }
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 2rem;
+    }
+    .frame { max-width: 1280px; width: 100%; }
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.5rem;
+    }
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.5rem, 2.4vw + 0.75rem, 2rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      color: var(--color-ink);
+      margin-bottom: 1.5rem;
+    }
+    svg { width: 100%; min-width: 900px; display: block; }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Architecture · graphify → diagram-design</p>
+    <h1>CI/CD 파이프라인 그래프</h1>
+
+    <svg viewBox="0 0 1280 808" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="midam-improve-pipeline-graph-title midam-improve-pipeline-graph-desc">
+      <title id="midam-improve-pipeline-graph-title">CI/CD 파이프라인 그래프</title>
+      <desc id="midam-improve-pipeline-graph-desc">graphify 가 파이프라인 코드에서 뽑은 지식 그래프를 다시 그린 그림으로, 세 레포의 다섯 개 워크플로가 AWS 액션 체인을 거쳐 Terraform 이 만든 OIDC 역할과 ECR 레포를 쓰고, GenAI 빌드는 CodeBuild 러너에서 돌며, 에뮬레이터 하네스가 이 job 들을 실행하고 액션을 shim 으로 대신함을 보여 준다.</desc>
+      <defs>
+        <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/></marker>
+        <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#eb6c36"/></marker>
+        <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#2e5aa8"/></marker>
+      </defs>
+
+      <rect width="100%" height="100%" fill="#f5f5f5"/>
+
+      <!-- ── Zones = graphify 커뮤니티를 묶은 것 (bg → zones → arrows → labels → nodes) ── -->
+      <g>
+        <rect x="32" y="56" width="240" height="528" rx="8" fill="rgba(45,49,66,0.02)" stroke="rgba(45,49,66,0.10)" stroke-width="0.8"/>
+        <rect x="44" y="60" width="132" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="110" y="69" fill="rgba(45,49,66,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">WORKFLOWS · 3 REPOS</text>
+
+        <rect x="616" y="56" width="336" height="528" rx="8" fill="rgba(45,49,66,0.02)" stroke="rgba(45,49,66,0.10)" stroke-width="0.8"/>
+        <rect x="628" y="60" width="208" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="732" y="69" fill="rgba(45,49,66,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">AWS · TERRAFORM ENVIRONMENTS/PROD</text>
+
+        <rect x="32" y="624" width="920" height="128" rx="8" fill="rgba(45,49,66,0.02)" stroke="rgba(45,49,66,0.10)" stroke-width="0.8"/>
+        <rect x="44" y="628" width="184" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="136" y="637" fill="rgba(45,49,66,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">EMULATOR HARNESS · MIDAM-IMPROVE</text>
+      </g>
+
+      <!-- ── Arrows (drawn before nodes) ── -->
+      <g fill="none">
+        <!-- 워크플로 5개 → AWS 액션 체인 (왼쪽 변 접점 132 · 228 · 340 · 436 · 532) -->
+        <line x1="256" y1="132" x2="350" y2="132" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="256" y1="228" x2="350" y2="228" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="256" y1="340" x2="350" y2="340" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="256" y1="436" x2="350" y2="436" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="256" y1="532" x2="350" y2="532" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <!-- build-deploy → promote (staging 검증 digest) -->
+        <line x1="100" y1="264" x2="100" y2="302" stroke="#4f5d75" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+        <!-- 액션 체인 → OIDC 역할, ECR -->
+        <line x1="544" y1="168" x2="646" y2="168" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="544" y1="336" x2="646" y2="336" stroke="#eb6c36" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+        <!-- GenAI publish → CodeBuild 러너 (runs-on), 액션 체인 아래로 돌아간다 -->
+        <path d="M 200,568 V 592 Q 200,600 208,600 H 768 Q 776,600 776,592 V 554" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <!-- test.sh → 워크플로 구역 (5개 job 실행) -->
+        <line x1="104" y1="664" x2="104" y2="588" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <!-- test.sh → run_workflow.py -->
+        <line x1="256" y1="700" x2="350" y2="700" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <!-- run_workflow.py shim → 액션 체인 (구현, dashed). y=600 의 runs-on 경로와 교차해 hop -->
+        <path d="M 448,664 V 608 a 8,8 0 0,0 0,-16 V 570" stroke="#4f5d75" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+      </g>
+
+      <!-- ── Arrow labels (masked, 6–10px from their connector) ── -->
+      <g font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em" fill="#7a8399">
+        <rect x="274" y="322" width="60" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="304" y="331">CREDS ONLY</text>
+        <rect x="274" y="418" width="60" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="304" y="427">CREDS ONLY</text>
+        <rect x="108" y="278" width="80" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="148" y="287">STAGING DIGEST</text>
+        <rect x="564" y="150" width="64" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="596" y="159">ASSUME ROLE</text>
+        <rect x="560" y="318" width="72" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="596" y="327" fill="#eb6c36">LOGIN · PUSH</text>
+        <rect x="656" y="582" width="48" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="680" y="591">RUNS-ON</text>
+        <rect x="112" y="604" width="72" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="148" y="613">RUNS 5 JOBS</text>
+        <rect x="276" y="682" width="56" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="304" y="691">PER JOB</text>
+        <rect x="456" y="636" width="64" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="488" y="645">IMPLEMENTS</text>
+      </g>
+
+      <!-- ── Nodes. 오른쪽 위 배지 = graphify 연결 수(degree) ── -->
+      <g font-family="'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">
+        <!-- backend CD -->
+        <rect x="48" y="96" width="208" height="72" rx="6" fill="#f5f5f5"/>
+        <rect x="48" y="96" width="208" height="72" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="56" y="102" width="48" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+        <text x="80" y="111" fill="rgba(45,49,66,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">BACKEND</text>
+        <rect x="204" y="102" width="44" height="12" rx="2" fill="#f5f5f5" stroke="rgba(45,49,66,0.30)" stroke-width="0.8"/>
+        <text x="226" y="111" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">deg 10</text>
+        <text x="152" y="132" fill="#2d3142" font-size="12" font-weight="600" text-anchor="middle">backend CD</text>
+        <text x="152" y="148" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">cd.yml · push develop</text>
+        <text x="152" y="160" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">tag sha-&lt;40&gt;</text>
+
+        <!-- infra build-deploy 초안 -->
+        <rect x="48" y="192" width="208" height="72" rx="6" fill="#f5f5f5"/>
+        <rect x="48" y="192" width="208" height="72" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="56" y="198" width="40" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+        <text x="76" y="207" fill="rgba(45,49,66,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">INFRA</text>
+        <rect x="204" y="198" width="44" height="12" rx="2" fill="#f5f5f5" stroke="rgba(45,49,66,0.30)" stroke-width="0.8"/>
+        <text x="226" y="207" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">deg 10</text>
+        <text x="152" y="228" fill="#2d3142" font-size="12" font-weight="600" text-anchor="middle">build-deploy 초안</text>
+        <text x="152" y="244" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">ci-cd/ · push develop</text>
+        <text x="152" y="256" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">tag &lt;7&gt; → staging</text>
+
+        <!-- infra promote 초안 -->
+        <rect x="48" y="304" width="208" height="72" rx="6" fill="#f5f5f5"/>
+        <rect x="48" y="304" width="208" height="72" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="56" y="310" width="40" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+        <text x="76" y="319" fill="rgba(45,49,66,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">INFRA</text>
+        <rect x="208" y="310" width="40" height="12" rx="2" fill="#f5f5f5" stroke="rgba(45,49,66,0.30)" stroke-width="0.8"/>
+        <text x="228" y="319" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">deg 8</text>
+        <text x="152" y="340" fill="#2d3142" font-size="12" font-weight="600" text-anchor="middle">promote 초안</text>
+        <text x="152" y="356" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">ci-cd/ · env prod</text>
+        <text x="152" y="368" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">lookup &lt;7&gt; → prod</text>
+
+        <!-- AI 이미지 미러 -->
+        <rect x="48" y="400" width="208" height="72" rx="6" fill="#f5f5f5"/>
+        <rect x="48" y="400" width="208" height="72" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="56" y="406" width="40" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+        <text x="76" y="415" fill="rgba(45,49,66,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">INFRA</text>
+        <rect x="208" y="406" width="40" height="12" rx="2" fill="#f5f5f5" stroke="rgba(45,49,66,0.30)" stroke-width="0.8"/>
+        <text x="228" y="415" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">deg 6</text>
+        <text x="152" y="436" fill="#2d3142" font-size="12" font-weight="600" text-anchor="middle">AI 이미지 미러</text>
+        <text x="152" y="452" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">ai-image-mirror.yml · prod</text>
+        <text x="152" y="464" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">skopeo copy --all</text>
+
+        <!-- GenAI publish -->
+        <rect x="48" y="496" width="208" height="72" rx="6" fill="#f5f5f5"/>
+        <rect x="48" y="496" width="208" height="72" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="56" y="502" width="40" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+        <text x="76" y="511" fill="rgba(45,49,66,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">GENAI</text>
+        <rect x="204" y="502" width="44" height="12" rx="2" fill="#f5f5f5" stroke="rgba(45,49,66,0.30)" stroke-width="0.8"/>
+        <text x="226" y="511" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">deg 11</text>
+        <text x="152" y="532" fill="#2d3142" font-size="12" font-weight="600" text-anchor="middle">GenAI publish</text>
+        <text x="152" y="548" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">genai-ci.yml · push main</text>
+        <text x="152" y="560" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">3 services · tag &lt;40&gt;</text>
+
+        <!-- AWS 액션 체인 (graphify hyperedge: OIDC → ECR login → build-push) -->
+        <rect x="352" y="96" width="192" height="472" rx="6" fill="#f5f5f5"/>
+        <rect x="352" y="96" width="192" height="472" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="360" y="102" width="52" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+        <text x="386" y="111" fill="rgba(45,49,66,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">ACTIONS</text>
+        <text x="448" y="148" fill="#2d3142" font-size="12" font-weight="600" text-anchor="middle">AWS 액션 체인</text>
+        <text x="448" y="164" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">OIDC → login → push</text>
+        <g font-family="'Geist Mono', monospace" text-anchor="middle">
+          <rect x="368" y="200" width="160" height="40" rx="2" fill="#f5f5f5" stroke="rgba(45,49,66,0.20)" stroke-width="0.8"/>
+          <text x="448" y="216" fill="#2d3142" font-size="9">configure-aws-credentials</text>
+          <text x="448" y="230" fill="#7a8399" font-size="8">deg 6 · 5 jobs</text>
+          <rect x="368" y="296" width="160" height="40" rx="2" fill="#f5f5f5" stroke="rgba(45,49,66,0.20)" stroke-width="0.8"/>
+          <text x="448" y="312" fill="#2d3142" font-size="9">amazon-ecr-login</text>
+          <text x="448" y="326" fill="#7a8399" font-size="8">deg 4 · 3 jobs</text>
+          <rect x="368" y="392" width="160" height="40" rx="2" fill="#f5f5f5" stroke="rgba(45,49,66,0.20)" stroke-width="0.8"/>
+          <text x="448" y="408" fill="#2d3142" font-size="9">build-push-action</text>
+          <text x="448" y="422" fill="#7a8399" font-size="8">deg 4 · 3 jobs</text>
+        </g>
+        <line x1="448" y1="240" x2="448" y2="294" stroke="rgba(45,49,66,0.30)" stroke-width="1" marker-end="url(#arrow)"/>
+        <line x1="448" y1="336" x2="448" y2="390" stroke="rgba(45,49,66,0.30)" stroke-width="1" marker-end="url(#arrow)"/>
+        <text x="448" y="476" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">promote · mirror use</text>
+        <text x="448" y="490" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">credentials only</text>
+
+        <!-- GitHub OIDC 역할 -->
+        <rect x="648" y="120" width="272" height="96" rx="6" fill="#f5f5f5"/>
+        <rect x="648" y="120" width="272" height="96" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="656" y="126" width="28" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+        <text x="670" y="135" fill="rgba(45,49,66,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">IAM</text>
+        <rect x="868" y="126" width="44" height="12" rx="2" fill="#f5f5f5" stroke="rgba(45,49,66,0.30)" stroke-width="0.8"/>
+        <text x="890" y="135" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">deg 11</text>
+        <text x="784" y="156" fill="#2d3142" font-size="12" font-weight="600" text-anchor="middle">GitHub OIDC 역할 3개</text>
+        <text x="784" y="174" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">jangin-gha-backend-ci · genai-ci</text>
+        <text x="784" y="188" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">jangin-gha-infra-prod (env prod)</text>
+        <text x="784" y="202" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">provider: bootstrap-github-oidc.sh</text>
+
+        <!-- ECR 레포 (focal) -->
+        <rect x="648" y="288" width="272" height="96" rx="6" fill="#f5f5f5"/>
+        <rect x="648" y="288" width="272" height="96" rx="6" fill="rgba(235,108,54,0.08)" stroke="#eb6c36" stroke-width="1"/>
+        <rect x="656" y="294" width="28" height="12" rx="2" fill="transparent" stroke="rgba(235,108,54,0.40)" stroke-width="0.8"/>
+        <text x="670" y="303" fill="rgba(235,108,54,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">ECR</text>
+        <rect x="872" y="294" width="40" height="12" rx="2" fill="#f5f5f5" stroke="rgba(235,108,54,0.40)" stroke-width="0.8"/>
+        <text x="892" y="303" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">deg 9</text>
+        <text x="784" y="324" fill="#2d3142" font-size="12" font-weight="600" text-anchor="middle">ECR 레포 5개</text>
+        <text x="784" y="342" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">module.ecr · IMMUTABLE · scan on push</text>
+        <text x="784" y="356" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">jangin-app · jangin-ai/*</text>
+        <text x="784" y="370" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">tags: sha-&lt;40&gt; · &lt;40&gt; · &lt;7&gt;</text>
+
+        <!-- CodeBuild GenAI 러너 -->
+        <rect x="648" y="456" width="272" height="96" rx="6" fill="#f5f5f5"/>
+        <rect x="648" y="456" width="272" height="96" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="656" y="462" width="48" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+        <text x="680" y="471" fill="rgba(45,49,66,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">RUNNER</text>
+        <rect x="868" y="462" width="44" height="12" rx="2" fill="#f5f5f5" stroke="rgba(45,49,66,0.30)" stroke-width="0.8"/>
+        <text x="890" y="471" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">deg 13</text>
+        <text x="784" y="492" fill="#2d3142" font-size="12" font-weight="600" text-anchor="middle">CodeBuild GenAI 러너</text>
+        <text x="784" y="510" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">module.codebuild_genai_runner</text>
+        <text x="784" y="524" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">runs-on codebuild-jangin-genai-runner</text>
+        <text x="784" y="538" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">page-generation · chatbot-llm</text>
+
+        <!-- test.sh -->
+        <rect x="48" y="664" width="208" height="72" rx="6" fill="#f5f5f5"/>
+        <rect x="48" y="664" width="208" height="72" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="56" y="670" width="32" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+        <text x="72" y="679" fill="rgba(45,49,66,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">BASH</text>
+        <rect x="204" y="670" width="44" height="12" rx="2" fill="#f5f5f5" stroke="rgba(45,49,66,0.30)" stroke-width="0.8"/>
+        <text x="226" y="679" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">deg 16</text>
+        <text x="152" y="700" fill="#2d3142" font-size="12" font-weight="600" text-anchor="middle">test.sh</text>
+        <text x="152" y="716" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">T0–T9 · 52 checks</text>
+        <text x="152" y="728" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">T0 terraform -target modules</text>
+
+        <!-- run_workflow.py -->
+        <rect x="352" y="664" width="192" height="72" rx="6" fill="#f5f5f5"/>
+        <rect x="352" y="664" width="192" height="72" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="360" y="670" width="24" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+        <text x="372" y="679" fill="rgba(45,49,66,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">PY</text>
+        <rect x="492" y="670" width="44" height="12" rx="2" fill="#f5f5f5" stroke="rgba(45,49,66,0.30)" stroke-width="0.8"/>
+        <text x="514" y="679" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">deg 20</text>
+        <text x="448" y="700" fill="#2d3142" font-size="12" font-weight="600" text-anchor="middle">run_workflow.py</text>
+        <text x="448" y="716" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">job runner · 3 action shims</text>
+        <text x="448" y="728" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">→ MiniStack :4566</text>
+      </g>
+
+      <!-- ── Annotation callouts (max 2) ── -->
+      <g font-size="14" word-spacing="2" font-style="italic" font-family="'Instrument Serif', 'Noto Serif KR', serif">
+        <text x="984" y="312" fill="#eb6c36">ECR 하나에 태그 규칙이 셋 —</text>
+        <text x="984" y="332" fill="#eb6c36">sha-&lt;40&gt; · &lt;40&gt; · &lt;7&gt;. promote 초안은</text>
+        <text x="984" y="352" fill="#eb6c36">backend CD 이미지를 찾지 못한다 (제안 1)</text>
+        <path d="M 976,328 H 926" fill="none" stroke="rgba(235,108,54,0.50)" stroke-width="1" stroke-dasharray="4,3"/>
+        <circle cx="924" cy="328" r="2" fill="#eb6c36"/>
+
+        <text x="984" y="488" fill="#2d3142">graphify 가 찾은 경로 — GenAI 큰 이미지</text>
+        <text x="984" y="508" fill="#2d3142">2개는 CodeBuild 러너에서 빌드된다.</text>
+        <text x="984" y="528" fill="#2d3142">이번 에뮬레이터 검증에선 다루지 않았다</text>
+        <path d="M 976,504 H 926" fill="none" stroke="rgba(45,49,66,0.40)" stroke-width="1" stroke-dasharray="4,3"/>
+        <circle cx="924" cy="504" r="2" fill="#2d3142"/>
+      </g>
+
+      <!-- ── Legend (bottom strip) ── -->
+      <g font-family="'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">
+        <line x1="24" y1="768" x2="1256" y2="768" stroke="rgba(45,49,66,0.10)" stroke-width="0.8"/>
+        <text x="24" y="792" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+
+        <rect x="112" y="780" width="24" height="16" rx="4" fill="rgba(235,108,54,0.08)" stroke="#eb6c36" stroke-width="1"/>
+        <text x="144" y="792" fill="#4f5d75" font-size="12">모든 이미지가 모이는 곳</text>
+
+        <rect x="320" y="780" width="24" height="16" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="352" y="792" fill="#4f5d75" font-size="12">워크플로 · 리소스 · 도구</text>
+
+        <line x1="528" y1="788" x2="560" y2="788" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <text x="572" y="792" fill="#4f5d75" font-size="12">사용 · 호출</text>
+
+        <line x1="672" y1="788" x2="704" y2="788" stroke="#4f5d75" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+        <text x="716" y="792" fill="#4f5d75" font-size="12">데이터 전달 · shim 구현</text>
+
+        <rect x="896" y="782" width="40" height="12" rx="2" fill="#f5f5f5" stroke="rgba(45,49,66,0.30)" stroke-width="0.8"/>
+        <text x="916" y="791" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">deg n</text>
+        <text x="944" y="792" fill="#4f5d75" font-size="12">graphify 연결 수</text>
+      </g>
+    </svg>
+  </div>
+</body>
+</html>

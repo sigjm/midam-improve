@@ -16,18 +16,19 @@
 ## 📑 목차
 
 1. [한눈에 보기](#overview)
-2. [검증 흐름](#flow)
-3. [검증 대상](#targets)
-4. [결과](#results)
-5. [발견한 문제와 개선 제안](#findings)
-6. [테스트 도구와 환경](#tooling)
-7. [GitHub Actions 실행 방식](#actions)
-8. [에뮬레이터의 한계](#emulator-limits)
-9. [안전장치](#safety)
-10. [실행 방법](#getting-started)
-11. [하네스를 만들며 겪은 문제와 대응](#troubleshooting)
-12. [프로젝트 구조](#structure)
-13. [알려진 제한](#limits)
+2. [검증 아키텍처](#architecture)
+3. [검증 흐름](#flow)
+4. [검증 대상](#targets)
+5. [결과](#results)
+6. [발견한 문제와 개선 제안](#findings)
+7. [테스트 도구와 환경](#tooling)
+8. [GitHub Actions 실행 방식](#actions)
+9. [에뮬레이터의 한계](#emulator-limits)
+10. [안전장치](#safety)
+11. [실행 방법](#getting-started)
+12. [하네스를 만들며 겪은 문제와 대응](#troubleshooting)
+13. [프로젝트 구조](#structure)
+14. [알려진 제한](#limits)
 
 <br>
 
@@ -52,39 +53,38 @@
 
 <br>
 
+<a id="architecture"></a>
+
+## 🏗️ 검증 아키텍처
+
+<p align="center">
+  <img src="docs/images/architecture.png" width="100%" alt="MiniStack 검증 아키텍처" />
+</p>
+
+모든 AWS 호출은 **로컬 호스트 안의 MiniStack** 에서 끝납니다.
+
+- **도구 3개:** 워크플로 러너(T1–T8), Terraform(T0), backend S3 검증(T9)이 `test.sh` 가 고정한 환경(`test`/`test` 자격증명, `localhost:4566` 엔드포인트)에서 조직 레포 원본을 실행합니다.
+- **허용된 외부 접속:** 공개 레지스트리의 익명 읽기뿐입니다(T8 원본 이미지, 컨테이너 이미지, 프로바이더, Gradle 의존성).
+- **차단된 경로:** 실제 AWS 계정으로 가는 경로는 로컬 경계에서 끊깁니다. 실제 AWS 요청은 0건입니다 ([안전장치](#safety)).
+- 다이어그램 원본은 [`docs/images/architecture.html`](docs/images/architecture.html)(인라인 SVG)이며, 고친 뒤 SVG 영역을 PNG 로 다시 내보내 `architecture.png` 를 바꿉니다.
+
+<br>
+
 <a id="flow"></a>
 
 ## 🔄 검증 흐름
 
-`./emulator/test.sh` 한 번이 아래를 순서대로 실행합니다.
+`./emulator/test.sh` 한 번이 아래 순서로 실행합니다. 화살표는 앞 단계가 다음 단계에 넘겨주는 산출물입니다.
 
-```text
-[준비]                                                  도구
-  MiniStack 컨테이너 새로 기동 (127.0.0.1:4566)            docker
-  → ecr.py 패치 (없는 태그 DescribeImages → ImageNotFoundException)
-  → infra OIDC 부트스트랩 스크립트 2회 (2회차는 건너뛰어야 함)  AWS CLI
-  → Route 53 호스팅 존 미리 생성
+<p align="center">
+  <img src="docs/images/pipeline.png" width="100%" alt="T0–T9 검증 파이프라인" />
+</p>
 
-[T0 · Terraform]
-  infra/terraform 복사 + override (local 백엔드)          terraform
-  → 빈 state plan 실패 확인 (for_each)
-  → 1단계 apply: IAM 정책 3개
-  → 2단계 apply: ECR · OIDC 역할 · S3 · KMS · CloudFront · ACM · WAF
-  → 재plan 변경 없음, 생성된 설정 확인                     AWS CLI · jq
-
-[T1–T8 · ECR 배포 파이프라인]
-  워크플로 job 하나씩 → run_workflow.py                    python3 · bash
-  → AWS 액션 3개는 shim (STS · ECR 로그인 · 빌드/푸시)      AWS CLI · docker buildx
-  → AI 이미지 미러는 실제 skopeo (대상 호스트만 바꿈)         skopeo
-  → 워크플로 출력 digest 를 ECR 과 대조                     AWS CLI · jq
-
-[T9 · backend 런타임 S3]
-  T1 이 빌드한 bootJar 레이어 + S3StorageCheck.java        temurin 25 컨테이너
-  → 실제 S3ImageStorage 로 presign · PUT · 검증 · 삭제      AWS SDK for Java v2
-                                                         N passed / M failed
-```
-
+- **준비:** MiniStack 을 새로 띄우고 `ecr.py` 를 패치합니다(없는 태그 → `ImageNotFoundException`). infra OIDC 부트스트랩 스크립트를 두 번 돌리고(2회차는 건너뛰어야 함), Route 53 호스팅 존을 만듭니다.
+- **T0:** 빈 state plan 실패를 확인한 뒤 IAM 정책 3개 → 나머지 순서로 두 번 apply 하고, 재plan 이 변경 없음인지 봅니다.
+- **T4·T6:** 두 갈래 입력을 받습니다. infra 초안(T5)이 올린 `<7자리>` 이미지는 승격되고, backend CD(T1)가 올린 `sha-<40자리>` 이미지는 찾지 못합니다.
 - T0 이 만든 ECR 레포 · S3 버킷을 T1–T9 가 그대로 씁니다. T9 는 T1 이 빌드한 JAR 를 클래스패스로 씁니다.
+- 다이어그램 원본은 [`docs/images/pipeline.html`](docs/images/pipeline.html) 입니다.
 - 매 실행마다 에뮬레이터와 Terraform state 를 새로 만듭니다. 이전 실행의 상태에 기대지 않습니다.
 - 시나리오별 스텝 로그와 결과 JSON 은 `emulator/out/<ID>.log` · `<ID>.json` 에 남습니다.
 
@@ -353,6 +353,7 @@ midam-improve/
 │   ├── S3StorageCheck.java   # backend 실제 S3 코드 검증. bootJar 레이어를 클래스패스로 실행
 │   ├── out/                  # 시나리오별 스텝 로그 · 결과 JSON
 │   └── .work/                # Terraform 작업 복사본 · 프로바이더 캐시 · local state (약 670MB)
+├── docs/images/             # README 다이어그램 (HTML 원본 + PNG)
 ├── backend/ · GenAI/ · infra/ · frontend/   # 조직 레포 클론
 ├── .gitignore
 └── README.md

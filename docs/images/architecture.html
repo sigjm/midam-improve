@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MiniStack 검증 아키텍처</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&family=Noto+Sans+KR:wght@400;500;600&family=Noto+Serif+KR:wght@400&family=Noto+Sans+TC:wght@400;500;600&family=Noto+Serif+TC:wght@400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper:   #f5f5f5;
+      --color-ink:     #2d3142;
+      --color-muted:   #4f5d75;
+      --color-accent:  #eb6c36;
+      --font-sans:     'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', system-ui, sans-serif;
+      --font-serif:    'Instrument Serif', 'Noto Serif KR', serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace;
+    }
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 2rem;
+    }
+    .frame { max-width: 1280px; width: 100%; }
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.5rem;
+    }
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.5rem, 2.4vw + 0.75rem, 2rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      color: var(--color-ink);
+      margin-bottom: 1.5rem;
+    }
+    svg { width: 100%; min-width: 900px; display: block; }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Architecture · midam-improve</p>
+    <h1>MiniStack 검증 아키텍처</h1>
+
+    <svg viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="midam-improve-architecture-title midam-improve-architecture-desc">
+      <title id="midam-improve-architecture-title">MiniStack 검증 아키텍처</title>
+      <desc id="midam-improve-architecture-desc">조직 레포 원본을 워크플로 러너, Terraform, backend S3 검증 세 도구가 로컬 MiniStack 에뮬레이터에 대고 실행하며, 외부에서는 공개 레지스트리 익명 읽기만 허용되고 실제 AWS 계정으로 가는 경로는 로컬 경계에서 차단됨을 보여 준다.</desc>
+      <defs>
+        <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/></marker>
+        <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#eb6c36"/></marker>
+        <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#2e5aa8"/></marker>
+      </defs>
+
+      <rect width="100%" height="100%" fill="#f5f5f5"/>
+
+      <!-- ── Zones (bg → zones → arrows → labels → nodes) ── -->
+      <g>
+        <!-- 로컬 호스트 (신뢰 경계) -->
+        <rect x="24" y="40" width="920" height="600" rx="8" fill="rgba(45,49,66,0.02)" stroke="rgba(45,49,66,0.10)" stroke-width="0.8"/>
+        <rect x="36" y="44" width="136" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="104" y="53" fill="rgba(45,49,66,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">LOCAL HOST · MACOS ARM64</text>
+
+        <!-- test.sh 실행 환경 -->
+        <rect x="264" y="96" width="360" height="448" rx="8" fill="rgba(45,49,66,0.02)" stroke="rgba(45,49,66,0.10)" stroke-width="0.8"/>
+        <rect x="276" y="100" width="248" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="400" y="109" fill="rgba(45,49,66,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">EMULATOR/TEST.SH · TEST/TEST · LOCALHOST:4566</text>
+
+        <!-- 공개 인터넷 -->
+        <rect x="976" y="40" width="280" height="600" rx="8" fill="rgba(45,49,66,0.02)" stroke="rgba(45,49,66,0.10)" stroke-width="0.8"/>
+        <rect x="988" y="44" width="88" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="1032" y="53" fill="rgba(45,49,66,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">PUBLIC INTERNET</text>
+      </g>
+
+      <!-- ── Arrows (drawn before nodes) ── -->
+      <g fill="none">
+        <!-- 조직 레포 → 도구 3개 -->
+        <line x1="184" y1="316" x2="262" y2="316" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+        <!-- 도구 3개 → MiniStack (왼쪽 변에 각자 다른 접점) -->
+        <line x1="600" y1="180" x2="702" y2="180" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="600" y1="316" x2="702" y2="316" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="600" y1="452" x2="702" y2="452" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+        <!-- 허용: 공개 레지스트리 → 워크플로 러너 (익명 읽기) -->
+        <path d="M 1000,168 H 960 Q 952,168 952,160 V 88 Q 952,80 944,80 H 568 Q 560,80 560,88 V 134" stroke="#2e5aa8" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow-link)"/>
+
+        <!-- 차단: 실제 AWS 로 가는 경로는 로컬 경계에서 끝난다 -->
+        <path d="M 444,544 V 556 Q 444,564 452,564 H 932" stroke="#eb6c36" stroke-width="1.2" stroke-dasharray="5,4"/>
+        <line x1="938" y1="558" x2="950" y2="570" stroke="#eb6c36" stroke-width="1.6"/>
+        <line x1="938" y1="570" x2="950" y2="558" stroke="#eb6c36" stroke-width="1.6"/>
+      </g>
+
+      <!-- ── Arrow labels (masked, 6–10px above their connector) ── -->
+      <g>
+        <!-- Korean labels: 12px sans 500, 16px masks -->
+        <rect x="188" y="294" width="72" height="16" rx="2" fill="#f5f5f5"/>
+        <text x="224" y="306" fill="#4f5d75" font-size="12" font-weight="500" font-family="'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">원본 그대로</text>
+
+        <rect x="724" y="58" width="72" height="16" rx="2" fill="#f5f5f5"/>
+        <text x="760" y="70" fill="#2e5aa8" font-size="12" font-weight="500" font-family="'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">익명 읽기만</text>
+
+        <rect x="640" y="542" width="120" height="16" rx="2" fill="#f5f5f5"/>
+        <text x="700" y="554" fill="#eb6c36" font-size="12" font-weight="500" font-family="'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">실제 AWS 요청 0건</text>
+
+        <!-- Latin labels: 8px mono, uppercase, tracked -->
+        <rect x="612" y="162" width="80" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="652" y="171" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">AWS CLI · PUSH</text>
+        <rect x="624" y="298" width="56" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="652" y="307" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">TF APPLY</text>
+        <rect x="624" y="434" width="56" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="652" y="443" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">SDK · PUT</text>
+      </g>
+
+      <!-- ── Nodes ── -->
+      <g>
+        <!-- 조직 레포 클론 (input) -->
+        <rect x="40" y="272" width="144" height="88" rx="6" fill="#f5f5f5"/>
+        <rect x="40" y="272" width="144" height="88" rx="6" fill="rgba(79,93,117,0.10)" stroke="#7a8399" stroke-width="1"/>
+        <rect x="48" y="278" width="32" height="12" rx="2" fill="transparent" stroke="rgba(122,131,153,0.40)" stroke-width="0.8"/>
+        <text x="64" y="287" fill="rgba(122,131,153,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">REPO</text>
+        <text x="112" y="314" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">조직 레포 클론</text>
+        <text x="112" y="332" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">backend · GenAI</text>
+        <text x="112" y="346" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">infra (unmodified)</text>
+
+        <!-- 워크플로 러너 -->
+        <rect x="288" y="136" width="312" height="88" rx="6" fill="#f5f5f5"/>
+        <rect x="288" y="136" width="312" height="88" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="296" y="142" width="28" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+        <text x="310" y="151" fill="rgba(45,49,66,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">RUN</text>
+        <text x="444" y="178" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">워크플로 러너</text>
+        <text x="444" y="196" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">run_workflow.py · aws-actions shim</text>
+        <text x="444" y="210" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">T1–T8 · docker buildx · skopeo shim</text>
+
+        <!-- Terraform -->
+        <rect x="288" y="272" width="312" height="88" rx="6" fill="#f5f5f5"/>
+        <rect x="288" y="272" width="312" height="88" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="296" y="278" width="28" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+        <text x="310" y="287" fill="rgba(45,49,66,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">IAC</text>
+        <text x="444" y="314" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Terraform</text>
+        <text x="444" y="332" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">environments/prod copy · backend "local"</text>
+        <text x="444" y="346" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">T0 · -target 2-phase apply</text>
+
+        <!-- backend S3 검증 -->
+        <rect x="288" y="408" width="312" height="88" rx="6" fill="#f5f5f5"/>
+        <rect x="288" y="408" width="312" height="88" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="296" y="414" width="28" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+        <text x="310" y="423" fill="rgba(45,49,66,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">JVM</text>
+        <text x="444" y="450" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">backend S3 검증</text>
+        <text x="444" y="468" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">S3StorageCheck.java · real S3ImageStorage</text>
+        <text x="444" y="482" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">T9 · temurin 25 · bootJar classpath</text>
+
+        <!-- MiniStack (focal) -->
+        <rect x="704" y="136" width="208" height="360" rx="6" fill="#f5f5f5"/>
+        <rect x="704" y="136" width="208" height="360" rx="6" fill="rgba(235,108,54,0.08)" stroke="#eb6c36" stroke-width="1"/>
+        <rect x="712" y="142" width="48" height="12" rx="2" fill="transparent" stroke="rgba(235,108,54,0.40)" stroke-width="0.8"/>
+        <text x="736" y="151" fill="rgba(235,108,54,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">AWS EMU</text>
+        <text x="808" y="184" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">MiniStack 1.5.24</text>
+        <text x="808" y="200" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">127.0.0.1:4566 · docker</text>
+        <!-- 서비스 칩 (노드 안의 배지) -->
+        <g font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle" fill="#2d3142">
+          <rect x="720" y="228" width="84" height="20" rx="2" fill="#ffffff" stroke="rgba(45,49,66,0.20)" stroke-width="0.8"/>
+          <text x="762" y="241">ECR API</text>
+          <rect x="812" y="228" width="84" height="20" rx="2" fill="#ffffff" stroke="rgba(45,49,66,0.20)" stroke-width="0.8"/>
+          <text x="854" y="241">ECR /v2/</text>
+          <rect x="720" y="260" width="84" height="20" rx="2" fill="#ffffff" stroke="rgba(45,49,66,0.20)" stroke-width="0.8"/>
+          <text x="762" y="273">STS</text>
+          <rect x="812" y="260" width="84" height="20" rx="2" fill="#ffffff" stroke="rgba(45,49,66,0.20)" stroke-width="0.8"/>
+          <text x="854" y="273">IAM</text>
+          <rect x="720" y="292" width="84" height="20" rx="2" fill="#ffffff" stroke="rgba(45,49,66,0.20)" stroke-width="0.8"/>
+          <text x="762" y="305">S3</text>
+          <rect x="812" y="292" width="84" height="20" rx="2" fill="#ffffff" stroke="rgba(45,49,66,0.20)" stroke-width="0.8"/>
+          <text x="854" y="305">KMS</text>
+          <rect x="720" y="324" width="84" height="20" rx="2" fill="#ffffff" stroke="rgba(45,49,66,0.20)" stroke-width="0.8"/>
+          <text x="762" y="337">Route 53</text>
+          <rect x="812" y="324" width="84" height="20" rx="2" fill="#ffffff" stroke="rgba(45,49,66,0.20)" stroke-width="0.8"/>
+          <text x="854" y="337">ACM</text>
+          <rect x="720" y="356" width="84" height="20" rx="2" fill="#ffffff" stroke="rgba(45,49,66,0.20)" stroke-width="0.8"/>
+          <text x="762" y="369">CloudFront</text>
+          <rect x="812" y="356" width="84" height="20" rx="2" fill="#ffffff" stroke="rgba(45,49,66,0.20)" stroke-width="0.8"/>
+          <text x="854" y="369">WAFv2</text>
+        </g>
+        <rect x="720" y="404" width="176" height="24" rx="2" fill="#f5f5f5" stroke="rgba(235,108,54,0.50)" stroke-width="0.8" stroke-dasharray="4,3"/>
+        <text x="808" y="420" fill="#2d3142" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">ecr.py patch · ImageNotFound</text>
+        <text x="808" y="456" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">fresh state every run</text>
+
+        <!-- 공개 레지스트리 (external) -->
+        <rect x="1000" y="136" width="232" height="104" rx="6" fill="#f5f5f5"/>
+        <rect x="1000" y="136" width="232" height="104" rx="6" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1"/>
+        <rect x="1008" y="142" width="44" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.30)" stroke-width="0.8"/>
+        <text x="1030" y="151" fill="rgba(45,49,66,0.6)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">PUBLIC</text>
+        <text x="1116" y="180" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">공개 레지스트리</text>
+        <text x="1116" y="198" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">public.ecr.aws (anonymous)</text>
+        <text x="1116" y="212" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Docker Hub · TF Registry</text>
+        <text x="1116" y="226" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Maven Central · GitHub</text>
+
+        <!-- 실제 AWS 계정 (blocked) -->
+        <rect x="1000" y="520" width="232" height="88" rx="6" fill="#f5f5f5"/>
+        <rect x="1000" y="520" width="232" height="88" rx="6" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1" stroke-dasharray="4,3"/>
+        <rect x="1008" y="526" width="52" height="12" rx="2" fill="transparent" stroke="rgba(235,108,54,0.50)" stroke-width="0.8"/>
+        <text x="1034" y="535" fill="#eb6c36" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">BLOCKED</text>
+        <text x="1116" y="562" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">실제 AWS 계정</text>
+        <text x="1116" y="580" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">*.amazonaws.com · IAM · ECR</text>
+        <text x="1116" y="594" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">tfstate S3 bucket</text>
+      </g>
+
+      <!-- ── Legend (bottom strip) ── -->
+      <g>
+        <line x1="24" y1="664" x2="1256" y2="664" stroke="rgba(45,49,66,0.10)" stroke-width="0.8"/>
+        <text x="24" y="692" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+
+        <rect x="112" y="680" width="24" height="16" rx="4" fill="rgba(235,108,54,0.08)" stroke="#eb6c36" stroke-width="1"/>
+        <text x="144" y="692" fill="#4f5d75" font-size="12" font-family="'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">AWS 에뮬레이터</text>
+
+        <rect x="272" y="680" width="24" height="16" rx="4" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1"/>
+        <text x="304" y="692" fill="#4f5d75" font-size="12" font-family="'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">외부 시스템</text>
+
+        <rect x="408" y="680" width="24" height="16" rx="4" fill="rgba(79,93,117,0.10)" stroke="#7a8399" stroke-width="1"/>
+        <text x="440" y="692" fill="#4f5d75" font-size="12" font-family="'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">입력</text>
+
+        <line x1="512" y1="688" x2="544" y2="688" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <text x="556" y="692" fill="#4f5d75" font-size="12" font-family="'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">로컬 호출</text>
+
+        <line x1="664" y1="688" x2="696" y2="688" stroke="#2e5aa8" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow-link)"/>
+        <text x="708" y="692" fill="#4f5d75" font-size="12" font-family="'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">허용된 외부 읽기</text>
+
+        <line x1="848" y1="688" x2="876" y2="688" stroke="#eb6c36" stroke-width="1.2" stroke-dasharray="5,4"/>
+        <line x1="880" y1="682" x2="892" y2="694" stroke="#eb6c36" stroke-width="1.6"/>
+        <line x1="880" y1="694" x2="892" y2="682" stroke="#eb6c36" stroke-width="1.6"/>
+        <text x="904" y="692" fill="#4f5d75" font-size="12" font-family="'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">차단된 경로</text>
+      </g>
+    </svg>
+  </div>
+</body>
+</html>
